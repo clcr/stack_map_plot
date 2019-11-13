@@ -12,7 +12,7 @@ def test_stack_map_plot():
 
 
 def stack_map_plot(raster_path_list, label_spec = None, colormap_spec=None):
-    Z = []
+    data = []
     for ii, raster_path in enumerate(raster_path_list):
         band = gdal.Open(raster_path)
         band_array = band.ReadAsArray()
@@ -21,9 +21,11 @@ def stack_map_plot(raster_path_list, label_spec = None, colormap_spec=None):
         gt = band.GetGeoTransform()
         X = np.arange(gt[0], gt[0] + gt[1]*band.RasterXSize, gt[1])
         Y = np.arange(gt[3], gt[3] + gt[5]*band.RasterYSize*-1, gt[5]*-1)   # Geotransforms.
-        X, Y = np.meshgrid(X, Y)
-        Z.append(band_array + (ii*10))
-
-    data = [go.Surface(z=z_map) for z_map in Z]
+        Z = np.ones(band_array.shape)
+        Z[band_array == nodata] = np.nan
+        Z = Z+(ii*5)
+        data.append(go.Surface(x=X, y= Y, z=Z, surfacecolor=band_array))
+        if ii > 0:
+            data[ii].showscale=False
     fig = go.Figure(data=data)
     fig.show()
